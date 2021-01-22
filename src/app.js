@@ -282,6 +282,10 @@ async function main() {
     },
   ];
 
+  mailer.send({
+    subject: 'test-subject', text: 'content',
+  });
+
   return;
 
   await cronLoop();
