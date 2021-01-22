@@ -282,6 +282,20 @@ async function main() {
     },
   ];
 
+
+  async function doRun1(target, index = 0, cookieName) {
+    await doRun(target, getCookieData(target.scriptName, cookieName)[index]);
+  }
+
+  async function doCron1(target, index = 0) {
+    await doCron(target, getCookieData()[index]);
+  }
+
+  async function getShareResult() {
+    await doRun(CashShare);
+    await doRun(Earn, getCookieData(void 0, 'JD_EARN_COOKIE'));
+  }
+
   return;
 
   await cronLoop();
@@ -315,7 +329,7 @@ main().then(function () {
     content = fs.readFileSync(logFile);
   }
   content += resultContent;
-  return;
+  if (!content) return;
   const title = ['lazy_script', getNowDate(), nowHour].join('_');
   mailer.send({
     subject: title, text: content,

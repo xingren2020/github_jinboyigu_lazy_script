@@ -27,13 +27,13 @@ const getEnv = () => {
 
 
 async function start() {
-  ['request', 'app'].forEach(name => {
-    const logFile = getLogFile(name);
-    exec(`touch ${logFile}`);
-    exec(`ln -snf ${logFile} ${logFile.replace(`.${getNowDate()}`, '')}`);
-
-    (name === 'app') && tail(logFile);
-  });
+  // ['request', 'app'].forEach(name => {
+  //   const logFile = getLogFile(name);
+  //   exec(`touch ${logFile}`);
+  //   exec(`ln -snf ${logFile} ${logFile.replace(`.${getNowDate()}`, '')}`);
+  //
+  //   (name === 'app') && tail(logFile);
+  // });
 
   // 输出
   return exec(`node src/app.js`, {env: getEnv() || {}}).toString();
