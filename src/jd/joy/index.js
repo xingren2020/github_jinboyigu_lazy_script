@@ -144,20 +144,72 @@ class Joy extends Template {
     await handleSign();
     // 喂食最多的
     await handleFeed();
+    await handleExchange();
     // 助力后获取狗粮
-    if(self.getNowHour() === 23) {
-      api.doPath('getFood', void 0, {method: 'GET', taskType: 'InviteUser'});
-      api.doPath('getFood', void 0, {method: 'GET', taskType: 'SignEveryDay'});
-      api.doPath('getFood', void 0, {method: 'GET', taskType: 'FeedEveryDay'});
-      api.doPath('getFood', void 0, {method: 'GET', taskType: 'exchange'});
+    if (self.getNowHour() === 23) {
+      await doFeed(api, 'InviteUser');
+      await doFeed(api, 'SignEveryDay');
+      await doFeed(api, 'FeedEveryDay');
+      await doFeed(api, 'exchange');
+    }
+
+    // 兑换豆豆
+    async function handleExchange() {
+      const data = await api.doUrl('https://jdjoy.jd.com/common/gift/getBeanConfigs', {method: 'GET'}).then(result => result['data']);
+      if (!data) return;
+      const nowHour = self.getNowHour();
+      let beanInfo;
+      if (0 <= nowHour && nowHour < 8) {
+        beanInfo = data['beanConfigs0'];
+      }
+      if (nowHour >= 8 && nowHour < 16) {
+        beanInfo = data['beanConfigs8'];
+      }
+      if (nowHour >= 16 && nowHour <= 23) {
+        beanInfo = data['beanConfigs0'];
+      }
+      if (!beanInfo) return;
+      for (const {id, leftStock} of beanInfo) {
+        if (leftStock === 0) continue;
+        const body = {
+          'buyParam': {
+            'orderSource': 'pet',
+            'saleInfoId': id,
+          },
+          'deviceInfo': {
+            'eid': 'M7UO6SRTFR5GQS7SPKPOGT7ZZB6KH2I7CUXZGVFSPJ5773VII5RHNSVRM4FK4RSLDCBRG3QQUS4WNC5PZ2767E6D3Q',
+            'fp': '28c2c6f0199a7790b251a724031be426',
+            'deviceType': '',
+            'macAddress': '',
+            'imei': '',
+            'os': '',
+            'osVersion': '',
+            'ip': '',
+            'appId': '',
+            'openUUID': '',
+            'idfa': '',
+            'uuid': '',
+            'clientVersion': '',
+            'networkType': '',
+            'appType': '',
+            'sdkToken': 'jdd01KKYHD3TR2D74RQPGTZ4XDKYRETYXJ4W2EKNLXFBWQJ6WSFEJEO345P4SCFDCLATWWWACAWMO7D6XGZLNCUU6BNXYQQUXNGCL4ZLYVZQ01234567',
+          },
+        };
+        await api.doUrl('https://jdjoy.jd.com/common/gift/new/exchange', {
+          headers: {
+            headers: {
+              contentType: 'application/json',
+            },
+          },
+          body,
+          qs: sign(body, 'application/json'),
+        });
+      }
     }
 
     // 三餐签到
     async function handleSign() {
-      await api.doPath('getFood', void 0, {
-        method: 'GET',
-        qs: {taskType: 'ThreeMeals'},
-      }).then(data => {
+      await doFeed(api, 'ThreeMeals').then(data => {
         if (!self.isSuccess(data)) return;
         data.data && self.log(`三餐签到获取到的狗粮: ${data.data}`);
       });
@@ -183,6 +235,10 @@ class Joy extends Template {
     }
 
   }
+}
+
+async function doFeed(api, taskType) {
+  return api.doPath('getFood', void 0, {method: 'GET', taskType});
 }
 
 // helpers
